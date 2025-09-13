@@ -3,7 +3,7 @@ from django.db import models
 
 class Trip(models.Model):
 	name = models.CharField(max_length=255)
-	description = models.TextField(blank=True, null=True)
+	description = models.TextField(blank=False, null=False)
 	started_at = models.DateTimeField(auto_now_add=True)
 	ended_at = models.DateTimeField(auto_now_add=True)
 
@@ -12,7 +12,7 @@ class Trip(models.Model):
 
 class Step(models.Model):
 	trip = models.ForeignKey(Trip, related_name='steps', on_delete=models.CASCADE)
-	description = models.TextField(blank=True, null=True)
+	description = models.TextField(blank=False, null=False)
 	started_at = models.DateTimeField(auto_now_add=True)
 	ended_at = models.DateTimeField(auto_now_add=True)
 	name = models.CharField(max_length=255)
