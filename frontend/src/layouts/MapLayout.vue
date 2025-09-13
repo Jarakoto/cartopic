@@ -12,6 +12,11 @@
 
     <q-drawer v-model="leftDrawerOpen" bordered>
       <q-list>
+        <q-item>
+          <q-item-section>
+            <q-item-label header>Voyages</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 

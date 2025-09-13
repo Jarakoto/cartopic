@@ -4,15 +4,16 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> Quasar App </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
       </q-toolbar>
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" bordered>
       <q-list>
-        <q-item-label header> Essential Links </q-item-label>
+        <q-item-label header>Voyages</q-item-label>
+        <q-item v-for="trip in tripStore.trips" :key="trip.id" clickable tag="router-link" :to="`/trips/${trip.id}`">
+          <q-item-section>{{ trip.name }}</q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -24,8 +25,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useTripStore } from 'stores/trip-store';
 
 const leftDrawerOpen = ref(false);
+const tripStore = useTripStore();
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
