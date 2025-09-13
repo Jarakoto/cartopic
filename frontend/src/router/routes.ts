@@ -17,6 +17,11 @@ const routes: RouteRecordRaw[] = [
         props: true,
         children: [
           {
+            path: '',
+            component: () => import('components/TripDetail/StepManager.vue'),
+            props: true
+          },
+          {
             path: 'steps/:stepId',
             component: () => import('components/TripDetail/StepDetail.vue'),
             props: true

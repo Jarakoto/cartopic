@@ -10,10 +10,9 @@
         size="md"
       />
       <div id="map" class="fit"></div>
-      <template v-if="mapLoaded">
-        <StepManager v-if="!tripStore.selectedStep" :map="map" />
-        <StepDetail v-else :step="tripStore.selectedStep" />
-    </template>
+      <template v-if="mapLoaded && tripStore.selectedTrip">
+        <router-view :map="map" />
+      </template>
   </q-page>
 </template>
 
@@ -22,11 +21,9 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTripStore } from 'stores/trip-store';
-import StepManager from 'components/TripDetail/StepManager.vue';
-import StepDetail from 'components/TripDetail/StepDetail.vue';
 
 const route = useRoute();
 const tripStore = useTripStore();
@@ -47,21 +44,7 @@ onMounted(() => {
     throw new Error(`Trip with id ${route.params.id} not found.`);
   }
   tripStore.setSelectedTrip(trip)
-
-
-  const stepId = route.params.stepId ? Number(route.params.stepId) : null;
-  if (route.params.stepId && stepId === null) {
-    throw new Error(`Step with id ${stepId} not found.`);
-  }
-  if (stepId !== null) {
-    const step = trip.steps?.find(s => s.id === stepId);
-
-    if (!step) {
-      throw new Error(`Step with id ${stepId} not found.`);
-    }
-    tripStore.setSelectedStep(step);
-  }
-
+  handleStep()
 
   map = new maplibregl.Map({
     container: 'map',
@@ -74,7 +57,23 @@ onMounted(() => {
   });
 
 });
+  const handleStep = () => {
+    const stepId = route.params.stepId ? Number(route.params.stepId) : null;
+    if (route.params.stepId && stepId === null) {
+      throw new Error(`Step with id ${stepId} not found.`);
+    }
+    if (stepId !== null) {
+      const step = tripStore.selectedTrip?.steps?.find(s => s.id === stepId);
+      if (!step) {
+        throw new Error(`Step with id ${stepId} not found.`);
+      }
+      tripStore.setSelectedStep(step);
+    } else {
+      tripStore.setSelectedStep(null);
+    }
+  };
 
+  watch(() => route.params.stepId, handleStep);
 </script>
 
 <style lang="scss">

@@ -33,7 +33,8 @@ export const useTripStore = defineStore('trip', () => {
     trips.value = camelcaseKeys(response.data, { deep: true });
   }
 
-  function setSelectedStep(step: Step) {
+  function setSelectedStep(step: Step | null) {
+    if (step === null) { selectedStep.value = null; return; }
     if (selectedTrip.value) {
       const foundStep = selectedTrip.value.steps.find(s => s.id === step.id);
       if (foundStep) {

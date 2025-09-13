@@ -1,18 +1,14 @@
 <template>
-<div id="q-app">
-  <div class="q-pa-md">
-    <q-card
-      class="slide-drawer slide-drawer--bottom text-white fixed-bottom column no-wrap"
-      :class="`slide-drawer--open-${drawerMode}`"
-      :style="drawerStyle"
-    >
-      <q-card-section class="slide-drawer__handler--horizontal row flex-center q-pa-sm q-gutter-x-md" v-touch-pan.mouse.vertical="slideDrawer">
-        <div class="cursor-pointer" @click="cycleDrawer"></div>
-      </q-card-section>
-        <slot></slot>
-    </q-card>
-  </div>
-</div>
+  <q-card
+    class="slide-drawer q-pa-md slide-drawer--bottom text-white fixed-bottom column no-wrap"
+    :class="`slide-drawer--open-${drawerMode}`"
+    :style="drawerStyle"
+  >
+    <q-card-section class="slide-drawer__handler--horizontal row flex-center q-pa-sm q-gutter-x-md" v-touch-pan.mouse.vertical="slideDrawer">
+      <div class="cursor-pointer" @click="cycleDrawer"></div>
+    </q-card-section>
+      <slot></slot>
+  </q-card>
 </template>
 
 <script lang="ts" setup>
@@ -90,6 +86,7 @@ onBeforeUnmount(() => {
 <style lang="sass">
 // Only disable overscroll and touch-action when finger is on the panel
 .slide-drawer
+  border-radius: 12px 12px 0 0
   overscroll-behavior: contain
   touch-action: none
   &--bottom
