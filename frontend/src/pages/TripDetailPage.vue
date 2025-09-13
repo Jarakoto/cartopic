@@ -2,6 +2,12 @@
   <q-page class="q-pa-none">
     <div id="map" class="fit"></div>
     <StepManager v-if="mapLoaded" :map="map" />
+    <SwipePanel
+      v-if="mapLoaded && tripStore.selectedTrip"
+      v-show="false"
+      :steps="tripStore.selectedTrip.steps"
+      @selectStep="onSelectStep"
+    />
   </q-page>
 </template>
 
@@ -14,6 +20,10 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTripStore } from 'stores/trip-store';
 import StepManager from 'components/TripDetail/StepManager.vue';
+import SwipePanel from 'components/TripDetail/SwipePanel.vue';
+
+function onSelectStep() {
+}
 
 const route = useRoute();
 const tripStore = useTripStore();
@@ -37,7 +47,7 @@ onMounted(() => {
 
   map = new maplibregl.Map({
     container: 'map',
-    style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+    style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     center: [47.516667, -18.933333],
     zoom: 13 // high zoom
   });

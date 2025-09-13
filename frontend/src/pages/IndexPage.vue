@@ -14,7 +14,7 @@ import { onMounted } from 'vue';
 onMounted(() => {
   new maplibregl.Map({
     container: 'map',
-    style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     center: [0, 0],
     zoom: 2
   });
