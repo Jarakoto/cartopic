@@ -85,11 +85,6 @@ onMounted(() => {
   addStepMarkers();
 });
 
-import { watch } from 'vue';
-watch(steps, () => {
-  addStepsLayers();
-  addStepMarkers();
-});
 function addStepMarkers() {
   // Remove old markers
   stepMarkers.forEach(marker => marker.remove());
