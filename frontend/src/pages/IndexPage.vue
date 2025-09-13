@@ -1,43 +1,35 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="q-pa-none">
+    <div id="map" class="fit"></div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
 
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1',
-  },
-  {
-    id: 2,
-    content: 'ct2',
-  },
-  {
-    id: 3,
-    content: 'ct3',
-  },
-  {
-    id: 4,
-    content: 'ct4',
-  },
-  {
-    id: 5,
-    content: 'ct5',
-  },
-]);
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-const meta = ref<Meta>({
-  totalCount: 1200,
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  new maplibregl.Map({
+    container: 'map',
+    style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+    center: [0, 0],
+    zoom: 2
+  });
 });
+
 </script>
+
+<style lang="scss">
+  #map {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    .maplibregl-ctrl-attrib {
+      display: none;
+    }
+  }
+</style>
