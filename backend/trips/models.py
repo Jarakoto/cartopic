@@ -16,8 +16,8 @@ class Step(models.Model):
 	started_at = models.DateTimeField(auto_now_add=True)
 	ended_at = models.DateTimeField(auto_now_add=True)
 	name = models.CharField(max_length=255)
-	latitude = models.FloatField(blank=True, null=True)
-	longitude = models.FloatField(blank=True, null=True)
+	lat = models.FloatField(blank=False, null=False)
+	lng = models.FloatField(blank=False, null=False)
 
 	def __str__(self):
 		return f"{self.name} ({self.trip.name})"
