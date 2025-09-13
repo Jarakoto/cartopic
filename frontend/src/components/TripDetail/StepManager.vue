@@ -49,6 +49,7 @@ const description = ref('');
 const stepAddEnabled = ref(false);
 const trip = useTripStore();
 let cursorMarker: maplibregl.Marker | null = null;
+let stepMarkers: maplibregl.Marker[] = [];
 const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
 const positionError = ref(false);
 const el = document.createElement('div');
@@ -78,7 +79,103 @@ onMounted(() => {
       cursorPosition.value = { lng: center.lng, lat: center.lat };
     }
   });
-})
+
+  // Add steps and arc layers
+  addStepsLayers();
+  addStepMarkers();
+});
+
+import { watch } from 'vue';
+watch(steps, () => {
+  addStepsLayers();
+  addStepMarkers();
+});
+function addStepMarkers() {
+  // Remove old markers
+  stepMarkers.forEach(marker => marker.remove());
+  stepMarkers = [];
+  const map = props.map;
+  const stepArr = steps.value;
+  stepArr.forEach(step => {
+    const markerEl = document.createElement('div');
+    markerEl.style.width = '24px';
+    markerEl.style.height = '24px';
+    markerEl.style.borderRadius = '50%';
+    markerEl.style.background = '#FF9800';
+    markerEl.style.border = '2px solid #fff';
+    markerEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+    markerEl.style.display = 'flex';
+    markerEl.style.alignItems = 'center';
+    markerEl.style.justifyContent = 'center';
+    markerEl.innerHTML = `<span style='color:#222;font-size:14px;font-weight:bold;'>${step.name[0] || ''}</span>`;
+    const marker = new maplibregl.Marker({ element: markerEl, anchor: 'center' })
+      .setLngLat([step.lng, step.lat])
+      .addTo(map);
+    stepMarkers.push(marker);
+  });
+}
+
+function addStepsLayers() {
+  const map = props.map;
+  // Remove old sources/layers if they exist
+  if (map.getLayer('steps-points')) map.removeLayer('steps-points');
+  if (map.getSource('steps')) map.removeSource('steps');
+  if (map.getLayer('steps-arc')) map.removeLayer('steps-arc');
+  if (map.getSource('steps-line')) map.removeSource('steps-line');
+
+  const stepArr = steps.value;
+  if (!stepArr.length) return;
+  // Points source
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = stepArr.map(step => ({
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [step.lng, step.lat]
+    },
+    properties: {
+      id: step.id,
+      name: step.name
+    }
+  }));
+  const geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
+    type: "FeatureCollection",
+    features
+  };
+  map.addSource('steps', {
+    type: 'geojson',
+    data: geojson
+  });
+
+  // Arc layer
+  if (features.length > 1) {
+    const lineFeature: GeoJSON.Feature<GeoJSON.LineString> = {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: features.map(f => f.geometry.coordinates)
+      },
+      properties: {}
+    };
+    map.addSource('steps-line', {
+      type: 'geojson',
+      data: lineFeature
+    });
+    map.addLayer({
+      id: 'steps-arc',
+      type: 'line',
+      source: 'steps-line',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#1976D2',
+        'line-width': 4,
+        'line-opacity': 0.6
+      }
+    });
+  }
+}
 
 function resetNewStepForm() {
   name.value = '';
