@@ -11,7 +11,7 @@
       </q-item>
     </q-list>
     <q-separator class="q-my-md" />
-    <q-btn v-show="!stepAddEnabled" @click="stepAddEnabled = true">
+    <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
       Ajouter une étape
     </q-btn>
     <div v-if="stepAddEnabled" class="step-adder-form">
@@ -51,6 +51,7 @@ const trip = useTripStore();
 let cursorMarker: maplibregl.Marker | null = null;
 const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
 const positionError = ref(false);
+const el = document.createElement('div');
 
 const steps = computed(() => {
   return trip.selectedTrip!.steps ? trip.selectedTrip!.steps : [];
@@ -58,7 +59,6 @@ const steps = computed(() => {
 
 onMounted(() => {
   // Add a cursor icon marker at the center
-  const el = document.createElement('div');
   el.style.background = 'none';
   el.style.width = '32px';
   el.style.height = '32px';
@@ -76,7 +76,6 @@ onMounted(() => {
     if (cursorMarker) {
       cursorMarker.setLngLat([center.lng, center.lat]);
       cursorPosition.value = { lng: center.lng, lat: center.lat };
-      el.style.visibility = 'visible';
     }
   });
 })
@@ -84,7 +83,12 @@ onMounted(() => {
 function resetNewStepForm() {
   name.value = '';
   cursorPosition.value = null;
-  stepAddEnabled.value = false;
+  setStepAddMode(false)
+}
+
+function setStepAddMode(newValue: boolean) {
+  stepAddEnabled.value = newValue;
+  el.style.visibility = newValue ? 'visible' : 'hidden';
 }
 
 async function submitStep() {
