@@ -1,16 +1,25 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { AxiosInstance } from 'axios';
+import camelcaseKeys from 'camelcase-keys';
 
 export interface Step {
   id: number;
   name: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  startedAt: Date | null;
+  endedAt: Date | null;
 }
 
 export interface Trip {
   id: number;
   name: string;
+  description: string;
   steps: Step[];
+  startedAt: Date | null;
+  endedAt: Date | null;
 }
 
 export const useTripStore = defineStore('trip', () => {
@@ -18,7 +27,7 @@ export const useTripStore = defineStore('trip', () => {
 
   async function fetchTrips(api: AxiosInstance) {
     const response = await api.get('/trips');
-    trips.value = response.data;
+    trips.value = camelcaseKeys(response.data, { deep: true });;
   }
 
   return { trips, fetchTrips };
