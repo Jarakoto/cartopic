@@ -1,43 +1,44 @@
 <template>
-  <div class="step-manager absolute"
-    style="top: 20px; right: 20px; z-index: 10; background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 250px;">
-    <div class="text-h6 q-mb-md">Étapes</div>
-    <q-list bordered>
-      <q-item v-for="step in steps" :key="step.id">
-        <q-item-section>{{ step.name }}</q-item-section>
-      </q-item>
-      <q-item v-if="steps.length === 0">
-        <q-item-section>Aucune étape</q-item-section>
-      </q-item>
-    </q-list>
-    <q-separator class="q-my-md" />
-    <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
-      Ajouter une étape
-    </q-btn>
-    <div v-if="stepAddEnabled" class="step-adder-form">
-      <q-form @submit.prevent="submitStep">
-        <q-input v-model="name" label="Nom" dense outlined required />
-        <q-input type="textarea" v-model="description" label="Description" dense outlined required />
-        <q-input
-          :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
-          label="Position du curseur"
-          dense
-          outlined
-          :error="positionError"
-          :error-message="positionError ? 'Positionner le curseur avec la carte' : ''"
-          readonly
-          required
-        />
-        <div class="column q-gutter-sm items-stretch">
-          <q-btn type="submit" color="positive" label="Ajouter étape" />
-          <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
+  <div class="q-pa-sm step-manager absolute">
+    <div class="row no-wrap q-gutter-sm">
+      <q-card v-for="step in steps" :key="step.id" class="step-card q-pa-none" v-show="!stepAddEnabled">
+        <q-card-section class="column items-center">
+          <div class="q-mb-xs text-bold">{{ step.name }}</div>
+        </q-card-section>
+      </q-card>
+    <q-card :class="['step-card', { 'full-width': stepAddEnabled }]">
+      <q-card-section>
+        <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
+          Ajouter une étape
+        </q-btn>
+        <div v-if="stepAddEnabled" class="step-adder-form">
+          <q-form @submit.prevent="submitStep">
+            <q-input v-model="name" label="Nom" dense outlined required />
+            <q-input type="textarea" v-model="description" label="Description" dense outlined required />
+            <q-input
+              :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
+              label="Position du curseur"
+              dense
+              outlined
+              :error="positionError"
+              :error-message="positionError ? 'Positionner le curseur avec la carte' : ''"
+              readonly
+              required
+            />
+            <div class="column q-gutter-sm items-stretch">
+              <q-btn type="submit" color="positive" label="Ajouter étape" />
+              <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
+            </div>
+          </q-form>
         </div>
-      </q-form>
+      </q-card-section>
+    </q-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { nextTick } from 'vue';
 
 import { ref, computed, onMounted } from 'vue';
 import { useTripStore } from 'stores/trip-store';
@@ -59,6 +60,13 @@ const steps = computed(() => {
 });
 
 onMounted(() => {
+  // Scroll to the end of the step-manager div after DOM is rendered
+  void nextTick().then(() => {
+    const container = document.querySelector('.step-manager');
+    if (container) {
+      container.scrollLeft = container.scrollWidth;
+    }
+  });
   // Add a cursor icon marker at the center
   el.style.background = 'none';
   el.style.width = '32px';
@@ -198,6 +206,20 @@ async function submitStep() {
 
 <style lang="scss">
 .step-manager {
-  width: 400px;
+  bottom: 0;
+  background: white;
+  right: 0;
+  width: 100%;
+  overflow-x: scroll;
+}
+.step-card {
+  min-width: 200px;
+  max-width: 200px;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.step-card.full-width {
+  min-width: 100%;
+  max-width: 100%;
 }
 </style>
