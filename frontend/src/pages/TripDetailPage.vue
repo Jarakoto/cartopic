@@ -1,13 +1,19 @@
 <template>
   <q-page class="q-pa-none">
-    <div id="map" class="fit"></div>
-    <StepManager v-if="mapLoaded" :map="map" />
-    <SwipePanel
-      v-if="mapLoaded && tripStore.selectedTrip"
-      v-show="false"
-      :steps="tripStore.selectedTrip.steps"
-      @selectStep="onSelectStep"
-    />
+      <q-btn
+        icon="arrow_back"
+        class="absolute"
+        style="top: 16px; left: 16px; z-index: 10;"
+        @click="$router.back()"
+        round
+        color="primary"
+        size="md"
+      />
+      <div id="map" class="fit"></div>
+      <template v-if="mapLoaded">
+        <StepManager v-if="!tripStore.selectedStep" :map="map" />
+        <StepDetail v-else :step="tripStore.selectedStep" />
+    </template>
   </q-page>
 </template>
 
@@ -20,10 +26,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useTripStore } from 'stores/trip-store';
 import StepManager from 'components/TripDetail/StepManager.vue';
-import SwipePanel from 'components/TripDetail/SwipePanel.vue';
-
-function onSelectStep() {
-}
+import StepDetail from 'components/TripDetail/StepDetail.vue';
 
 const route = useRoute();
 const tripStore = useTripStore();
@@ -44,6 +47,21 @@ onMounted(() => {
     throw new Error(`Trip with id ${route.params.id} not found.`);
   }
   tripStore.setSelectedTrip(trip)
+
+
+  const stepId = route.params.stepId ? Number(route.params.stepId) : null;
+  if (route.params.stepId && stepId === null) {
+    throw new Error(`Step with id ${stepId} not found.`);
+  }
+  if (stepId !== null) {
+    const step = trip.steps?.find(s => s.id === stepId);
+
+    if (!step) {
+      throw new Error(`Step with id ${stepId} not found.`);
+    }
+    tripStore.setSelectedStep(step);
+  }
+
 
   map = new maplibregl.Map({
     container: 'map',

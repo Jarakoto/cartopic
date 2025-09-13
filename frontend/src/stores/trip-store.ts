@@ -26,10 +26,20 @@ export interface Trip {
 export const useTripStore = defineStore('trip', () => {
   const trips = ref<Trip[]>([]);
   const selectedTrip = ref<Trip | null>(null);
+  const selectedStep = ref<Step | null>(null);
 
   async function fetchTrips(api: AxiosInstance) {
     const response = await api.get('/trips');
     trips.value = camelcaseKeys(response.data, { deep: true });
+  }
+
+  function setSelectedStep(step: Step) {
+    if (selectedTrip.value) {
+      const foundStep = selectedTrip.value.steps.find(s => s.id === step.id);
+      if (foundStep) {
+        selectedStep.value = foundStep;
+      }
+    }
   }
 
   function setSelectedTrip(trip: Trip) {
@@ -46,5 +56,5 @@ export const useTripStore = defineStore('trip', () => {
     return newStep;
   }
 
-  return { trips, fetchTrips, selectedTrip, setSelectedTrip, addStep };
+  return { trips, fetchTrips, selectedTrip, selectedStep, setSelectedTrip, addStep, setSelectedStep };
 });

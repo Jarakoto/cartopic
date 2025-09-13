@@ -1,38 +1,38 @@
 <template>
   <div class="q-pa-sm step-manager absolute">
     <div class="row no-wrap q-gutter-sm">
-      <q-card v-for="step in steps" :key="step.id" class="step-card q-pa-none" v-show="!stepAddEnabled">
+      <q-card v-for="step in steps" :key="step.id" class="step-card q-pa-none" v-show="!stepAddEnabled" @click="openStep(step.id)" style="cursor:pointer;">
         <q-card-section class="column items-center">
           <div class="q-mb-xs text-bold">{{ step.name }}</div>
         </q-card-section>
       </q-card>
-    <q-card :class="['step-card', { 'full-width': stepAddEnabled }]">
-      <q-card-section>
-        <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
-          Ajouter une étape
-        </q-btn>
-        <div v-if="stepAddEnabled" class="step-adder-form">
-          <q-form @submit.prevent="submitStep">
-            <q-input v-model="name" label="Nom" dense outlined required />
-            <q-input type="textarea" v-model="description" label="Description" dense outlined required />
-            <q-input
-              :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
-              label="Position du curseur"
-              dense
-              outlined
-              :error="positionError"
-              :error-message="positionError ? 'Positionner le curseur avec la carte' : ''"
-              readonly
-              required
-            />
-            <div class="column q-gutter-sm items-stretch">
-              <q-btn type="submit" color="positive" label="Ajouter étape" />
-              <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
-            </div>
-          </q-form>
-        </div>
-      </q-card-section>
-    </q-card>
+      <q-card :class="['step-card', { 'full-width': stepAddEnabled }]">
+        <q-card-section>
+          <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
+            Ajouter une étape
+          </q-btn>
+          <div v-if="stepAddEnabled" class="step-adder-form">
+            <q-form @submit.prevent="submitStep">
+              <q-input v-model="name" label="Nom" dense outlined required />
+              <q-input type="textarea" v-model="description" label="Description" dense outlined required />
+              <q-input
+                :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
+                label="Position du curseur"
+                dense
+                outlined
+                :error="positionError"
+                :error-message="positionError ? 'Positionner le curseur avec la carte' : ''"
+                readonly
+                required
+              />
+              <div class="column q-gutter-sm items-stretch">
+                <q-btn type="submit" color="positive" label="Ajouter étape" />
+                <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
+              </div>
+            </q-form>
+          </div>
+        </q-card-section>
+      </q-card>
     </div>
   </div>
 </template>
@@ -43,12 +43,14 @@ import { nextTick } from 'vue';
 import { ref, computed, onMounted } from 'vue';
 import { useTripStore } from 'stores/trip-store';
 import maplibregl from 'maplibre-gl';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{ map: maplibregl.Map }>();
 const name = ref('');
 const description = ref('');
 const stepAddEnabled = ref(false);
 const trip = useTripStore();
+const router = useRouter();
 let cursorMarker: maplibregl.Marker | null = null;
 let stepMarkers: maplibregl.Marker[] = [];
 const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
@@ -58,6 +60,12 @@ const el = document.createElement('div');
 const steps = computed(() => {
   return trip.selectedTrip!.steps ? trip.selectedTrip!.steps : [];
 });
+
+function openStep(stepId: number) {
+  if (trip.selectedTrip) {
+    void router.push(`/trips/${trip.selectedTrip.id}/steps/${stepId}`);
+  }
+}
 
 onMounted(() => {
   // Scroll to the end of the step-manager div after DOM is rendered

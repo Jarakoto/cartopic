@@ -1,10 +1,6 @@
 <template>
 <div id="q-app">
   <div class="q-pa-md">
-    <div class="text-subtitle1 q-py-xl text-center">
-      Play with the drawer on bottom
-    </div>
-
     <q-card
       class="slide-drawer slide-drawer--bottom text-white fixed-bottom column no-wrap"
       :class="`slide-drawer--open-${drawerMode}`"
@@ -13,18 +9,7 @@
       <q-card-section class="slide-drawer__handler--horizontal row flex-center q-pa-sm q-gutter-x-md" v-touch-pan.mouse.vertical="slideDrawer">
         <div class="cursor-pointer" @click="cycleDrawer"></div>
       </q-card-section>
-
-      <q-card-section class="col">
-        <div class="text-h6">Our Changing Planet</div>
-        <div class="text-subtitle2">by John Doe</div>
-        <div>{{ lorem }}</div>
-      </q-card-section>
-      
-  <q-card-section v-if="drawerMode === 'full'" class="col">
-        <div class="text-h6">Our Changing Planet - only shown when drawer is open</div>
-        <div class="text-subtitle2">by John Doe</div>
-        <div>{{ lorem }}</div>
-      </q-card-section>
+        <slot></slot>
     </q-card>
   </div>
 </div>
@@ -39,7 +24,6 @@ const drawerTopOffset = 100
 const drawerOpenRatioHalf = 50
 
 const $q = useQuasar()
-const lorem = ref('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.')
 const drawerPos = ref(drawerMinHeight)
 let animateTimeout: ReturnType<typeof setTimeout> | undefined = undefined
 

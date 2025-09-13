@@ -11,7 +11,18 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),    
     children: [
       { path: '', component: () => import('pages/TripsPage.vue') },
-      { path: ':id', component: () => import('pages/TripDetailPage.vue'), props: true },
+      {
+        path: ':id',
+        component: () => import('pages/TripDetailPage.vue'),
+        props: true,
+        children: [
+          {
+            path: 'steps/:stepId',
+            component: () => import('components/TripDetail/StepDetail.vue'),
+            props: true
+          }
+        ]
+      },
     ],
   }, 
   // Always leave this as last one,
