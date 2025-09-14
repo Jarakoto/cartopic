@@ -1,12 +1,13 @@
 from django.db import models
+from django.utils import timezone
 from .trip import Trip
 
 class Step(models.Model):
     trip = models.ForeignKey(Trip, related_name='steps', on_delete=models.CASCADE)
     order = models.PositiveIntegerField(editable=True, default=0, help_text="Sequence index within a trip starting at 0")
     description = models.TextField(blank=False, null=False)
-    started_at = models.DateTimeField(auto_now_add=True)
-    ended_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(default=timezone.now, help_text="Start time (editable)")
+    ended_at = models.DateTimeField(default=timezone.now, help_text="End time (editable)")
     name = models.CharField(max_length=255)
     lat = models.FloatField(blank=False, null=False)
     lng = models.FloatField(blank=False, null=False)

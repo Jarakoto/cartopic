@@ -1,9 +1,9 @@
 <template>
-  <div class="q-pa-sm step-manager absolute left-panel">
-    <q-timeline layout="dense" color="primary">
+  <div class="q-pa-sm q-pr-none step-manager absolute left-panel">
+    <q-timeline layout="dense" color="primary" horizontal>
       <q-timeline-entry v-for="step in steps" :key="step.id" :title="step.name" @click="selectExistingStep(step.id)"
         class="step-timeline-entry" v-show="!stepAddEnabled">
-        <div class="q-mb-xs text-bold">{{ step.name }}</div>
+        <div class="q-mb-xs">{{ step.startedAt }}</div>
       </q-timeline-entry>
       <q-timeline-entry v-if="stepAddEnabled" class="step-timeline-entry">
         <q-form @submit.prevent="submitStep">
@@ -137,7 +137,7 @@ function submitStep() {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 320px;
+  width: 280px;
   background: white;
   overflow-y: auto;
   z-index: 20;

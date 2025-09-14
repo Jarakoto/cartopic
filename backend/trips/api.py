@@ -28,6 +28,8 @@ class StepSchema(Schema):
     order: int
     cover_photo: CoverPhotoRef | None = None
     photos: list[PhotoSchema] = []
+    started_at: str | None = None
+    ended_at: str | None = None
 
 class StepCreateSchema(Schema):
     name: str
@@ -75,6 +77,8 @@ def list_trips(request):
                     CoverPhotoRef(id=s.cover_photo.id, url=s.cover_photo.url) # type: ignore
                     if s.cover_photo else None
                 ),
+                started_at=s.started_at.isoformat() if s.started_at else None,
+                ended_at=s.ended_at.isoformat() if s.ended_at else None,
                 photos=[
                     PhotoSchema(
                         id=p.id,

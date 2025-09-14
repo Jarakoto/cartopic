@@ -7,7 +7,7 @@ from django.utils.html import format_html
 class StepInline(admin.TabularInline):
 	model = Step
 	extra = 1
-	fields = ("name", "order", "description", "lat", "lng", "cover_photo")
+	fields = ("name", "order", "description", "lat", "lng", "cover_photo", "started_at", "ended_at")
 
 class PhotoInline(admin.TabularInline):
 	model = Photo
@@ -20,7 +20,7 @@ class TripAdmin(admin.ModelAdmin):
 
 @admin.register(Step)
 class StepAdmin(admin.ModelAdmin):
-	list_display = ("id", "name", "trip", "order", "cover_photo", "photo_count")
+	list_display = ("id", "name", "trip", "order", "cover_photo", "photo_count", "started_at", "ended_at")
 	ordering = ("trip", "order")
 	list_editable = ("order",)
 	inlines = [PhotoInline]
