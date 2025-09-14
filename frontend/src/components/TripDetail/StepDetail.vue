@@ -1,41 +1,53 @@
 <template>
   <SwipePanel>
-  <div class="step-detail-wrapper">
-    <div class="title-row">
-      <div class="title text-h5 text-primary ellipsis">{{ step?.name }}</div>
+    <div class="step-detail-wrapper">
+      <div class="title-row">
+        <div class="title text-h5 text-primary ellipsis">{{ step?.name }}</div>
+      </div>
+      <div class="tabs-area">
+        <q-tabs v-model="tab" dense class="text-grey" active-color="primary" align="left" inline-label narrow-indicator
+          indicator-color="primary">
+          <q-tab name="description" icon="description" title="Description" label="Journal" />
+          <q-tab name="photos" icon="photo" title="Photos" label="Photos" />
+        </q-tabs>
+        <q-separator />
+        <q-tab-panels v-model="tab" animated class="panels">
+          <q-tab-panel name="description" class="q-pl-none">
+            <div class="desc-scroll">
+              <p class="desc-text">{{ step?.description || '—' }}</p>
+            </div>
+          </q-tab-panel>
+          <q-tab-panel name="photos" class="q-px-none panel-col">
+            <PhotoUploader class="q-mb-md" @uploaded="onPhotoUploaded" />
+            <PhotoViewer :photos="photos" :loading="loadingPhotos" />
+          </q-tab-panel>
+        </q-tab-panels>
+      </div>
     </div>
-    <div class="tabs-area">
-      <q-tabs v-model="tab" dense class="text-grey" active-color="primary" align="left" inline-label narrow-indicator indicator-color="primary">
-        <q-tab name="description" icon="description" title="Description" label="Journal" />
-        <q-tab name="photos" icon="photo" title="Photos" label="Photos" />
-      </q-tabs>
-      <q-separator />
-      <q-tab-panels v-model="tab" animated class="panels">
-        <q-tab-panel name="description" class="q-pl-none">
-          <div class="desc-scroll">
-            <p class="desc-text">{{ step?.description || '—' }}</p>
-          </div>
-        </q-tab-panel>
-        <q-tab-panel name="photos" class="q-px-none panel-col">
-          <PhotoViewer :photos="photos" :loading="loadingPhotos" />
-        </q-tab-panel>
-      </q-tab-panels>
-    </div>
-  </div>
   </SwipePanel>
 </template>
 
 <script lang="ts" setup>
 import SwipePanel from '../Generic/SwipePanel.vue';
-import { useTripStore } from 'stores/trip-store';
+import { type Photo, useTripStore } from 'stores/trip-store';
 import { computed, ref } from 'vue';
 import PhotoViewer from './PhotoViewer.vue';
+import PhotoUploader from './PhotoUploader.vue';
 
 const tripStore = useTripStore();
 const step = computed(() => tripStore.selectedStep);
 const photos = computed(() => step.value?.photos ?? []);
 const loadingPhotos = ref(false);
 const tab = ref<'description' | 'photos'>('description');
+
+function onPhotoUploaded(photo: Photo) {
+  if (!step.value) return;
+  if (!step.value.photos) step.value.photos = [];
+  // Avoid duplicates by id
+  if (!step.value.photos.find(p => p.id === photo.id)) {
+    step.value.photos.push(photo);
+  }
+}
 
 // Photo logic moved into PhotoViewer component
 

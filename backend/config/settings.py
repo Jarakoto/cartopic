@@ -11,16 +11,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file (if present) before accessing them
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q#7*l7ip_8lk7o4c6#jq@j%^^(6b3cxahpl%u)zjk%i@ur7co5'
+# Allow override via environment (DJANGO_SECRET_KEY) while keeping existing dev default
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-q#7*l7ip_8lk7o4c6#jq@j%^^(6b3cxahpl%u)zjk%i@ur7co5')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -131,3 +137,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
+
+# ownCloud / Nextcloud integration settings (configure via environment variables)
+OWNCLOUD_BASE_URL = os.getenv('OWNCLOUD_BASE_URL', '').rstrip('/')  # e.g. https://cloud.example.com
+OWNCLOUD_USERNAME = os.getenv('OWNCLOUD_USERNAME', '')
+OWNCLOUD_PASSWORD = os.getenv('OWNCLOUD_PASSWORD', '')
+OWNCLOUD_UPLOAD_ROOT = os.getenv('OWNCLOUD_UPLOAD_ROOT', '/Photos/Cartopic')  # remote folder path
+OWNCLOUD_SHARE_PUBLIC = os.getenv('OWNCLOUD_SHARE_PUBLIC', 'true').lower() == 'true'
+OWNCLOUD_SHARE_PERMISSIONS = int(os.getenv('OWNCLOUD_SHARE_PERMISSIONS', '1'))  # 1 = read

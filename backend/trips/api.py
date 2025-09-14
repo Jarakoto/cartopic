@@ -1,7 +1,9 @@
 from ninja import NinjaAPI
 from .models import Trip, Step, Photo
 from django.shortcuts import get_object_or_404
-from ninja import Schema
+from ninja import Schema, File, Form
+from ninja.files import UploadedFile
+from .services.owncloud import upload_file, OwnCloudError
 
 api = NinjaAPI()
 
@@ -42,6 +44,13 @@ class PhotoCreateSchema(Schema):
     name: str
     description: str | None = None
     url: str
+
+class PhotoUploadResponse(Schema):
+    id: int
+    name: str
+    description: str | None = None
+    url: str
+    date: str
 
 @api.get("/trips", response=list[TripSchema])
 def list_trips(request):
@@ -97,3 +106,32 @@ def create_photo(request, trip_id: int, step_id: int, data: PhotoCreateSchema):
     step = get_object_or_404(Step, id=step_id, trip_id=trip_id)
     photo = Photo.objects.create(step=step, name=data.name, description=data.description, url=data.url)
     return PhotoSchema(id=photo.id, name=photo.name, description=photo.description, date=photo.date.isoformat(), url=photo.url) # type: ignore
+
+@api.post("/trips/{trip_id}/steps/{step_id}/photos/upload", response=PhotoUploadResponse)
+def upload_photo(
+    request,
+    trip_id: int,
+    step_id: int,
+    file: UploadedFile = File(...),  # type: ignore
+    name: str | None = Form(None),  # type: ignore
+    description: str | None = Form(None),  # type: ignore
+):  # type: ignore
+    """Upload a photo file and create a Photo record.
+
+    name / description are expected as multipart form fields together with the file.
+    """
+    step = get_object_or_404(Step, id=step_id, trip_id=trip_id)
+    display_name = name or file.name
+    try:
+        share_page_url, direct_url = upload_file(file.read(), file.name)
+    except OwnCloudError as e:
+        status = 400 if 'incomplete' in str(e).lower() else 500
+        return api.create_response(request, {"error": str(e)}, status=status)
+    photo = Photo.objects.create(step=step, name=display_name, description=description, url=direct_url)
+    return PhotoUploadResponse(
+    id=photo.id,  # type: ignore[attr-defined]
+        name=photo.name,
+        description=photo.description,
+        url=photo.url,
+        date=photo.date.isoformat(),
+    )  # type: ignore
