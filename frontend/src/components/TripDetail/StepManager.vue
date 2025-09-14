@@ -6,10 +6,10 @@
       <div class="cards-row-wrapper col-grow">
         <div class="step-cards-row flex row no-wrap q-gutter-md q-py-none"
           v-touch-swipe.mouse.horizontal.prevent="handleSwipe"
-          style="height: 200px; overflow-x: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;">
+          style="overflow-x: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;">
           <q-card v-for="(step) in steps" :key="step.id" class="step-card cursor-pointer"
-            :class="{ focused: step.id === focusedStepId }" :data-step-id="step.id" @click="selectExistingStep(step.id)"
-            flat bordered>
+            :class="{ focused: step.id === prefocusedStepId }" :data-step-id="step.id" @click="selectStep(step)" flat
+            bordered>
             <q-card-section>
               <div class="text-bold q-mb-xs">{{ step.name }}</div>
               <div class="q-mb-xs text-caption text-grey-7 align-center flex">{{ new
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, computed, onMounted, watch } from 'vue';
-import { useTripStore } from 'stores/trip-store';
+import { type Step, useTripStore } from 'stores/trip-store';
 import { useRouter } from 'vue-router';
 
 import maplibregl from 'maplibre-gl';
@@ -80,7 +80,9 @@ let cursorEl: HTMLDivElement | null = null;
 const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
 
 const steps = computed(() => trip.selectedTrip?.steps || []);
-const focusedStepId = ref<number | null>(null);
+const prefocusedStep = ref<Step | null>(null);
+
+const prefocusedStepId = computed(() => prefocusedStep.value ? prefocusedStep.value.id : null);
 
 const isDesktop = ref(typeof window !== 'undefined' ? window.innerWidth > 600 : true);
 if (typeof window !== 'undefined') {
@@ -88,50 +90,47 @@ if (typeof window !== 'undefined') {
 }
 const canGoPrev = computed(() => {
   if (!steps.value.length) return false;
-  const idx = steps.value.findIndex(s => s.id === focusedStepId.value);
+  const idx = steps.value.findIndex(s => s.id === prefocusedStepId.value);
   return idx > 0;
 });
 const canGoNext = computed(() => {
   if (!steps.value.length) return false;
-  const idx = steps.value.findIndex(s => s.id === focusedStepId.value);
+  const idx = steps.value.findIndex(s => s.id === prefocusedStepId.value);
   return idx !== -1 && idx < steps.value.length - 1;
 });
 const canShowNav = computed(() => isDesktop.value && steps.value.length > 1);
 
-function selectExistingStep(stepId: number) {
-  const tep = false
-  focusedStepId.value = stepId;
-
-  if (tep) {
-    emits('select-step', stepId);
-    if (trip.selectedTrip) {
-      void router.push(`/trips/${trip.selectedTrip.id}/steps/${stepId}`);
-    }
+function selectStep({ id: stepId }: { id: number }) {
+  emits('select-step', stepId);
+  if (trip.selectedTrip) {
+    void router.push(`/trips/${trip.selectedTrip.id}/steps/${stepId}`);
   }
-
-  void nextTick(() => centerFocusedCard());
 }
 
 function centerFocusedCard() {
-  if (focusedStepId.value == null) return;
+  if (prefocusedStepId.value == null) return;
   const container = document.querySelector('.step-cards-row');
-  const card = document.querySelector(`.step-card[data-step-id="${focusedStepId.value}"]`);
+  const card = document.querySelector(`.step-card[data-step-id="${prefocusedStepId.value}"]`);
   if (!container || !card) return;
   const cRect = container.getBoundingClientRect();
   const cardRect = card.getBoundingClientRect();
   const offset = (cardRect.left + cardRect.width / 2) - (cRect.left + cRect.width / 2);
   (container as HTMLElement).scrollBy({ left: offset, behavior: 'smooth' });
+  props.map.flyTo({ center: [prefocusedStep.value!.lng, prefocusedStep.value!.lat], zoom: 12, duration: 2000 });
 }
 
 function focusByDelta(delta: number) {
   if (!steps.value.length) return;
-  const idx = steps.value.findIndex(s => s.id === focusedStepId.value);
+  const idx = steps.value.findIndex(s => s.id === prefocusedStepId.value);
   const currentIdx = idx === -1 ? 0 : idx;
   let nextIdx = currentIdx + delta;
-  if (nextIdx < 0) nextIdx = 0; // clamp (no wrap) – change to wrap if desired
+  if (nextIdx < 0) nextIdx = 0;
   if (nextIdx >= steps.value.length) nextIdx = steps.value.length - 1;
   const next = steps.value[nextIdx];
-  if (next) selectExistingStep(next.id);
+  if (next) {
+    prefocusedStep.value = next;
+    void nextTick(() => centerFocusedCard());
+  }
 }
 
 interface SwipeDetails {
@@ -161,7 +160,7 @@ onMounted(() => {
   if (steps.value.length > 0) {
     const last = steps.value[steps.value.length - 1];
     if (last) {
-      focusedStepId.value = last.id;
+      prefocusedStep.value = last;
       void nextTick(() => centerFocusedCard());
     }
   }
@@ -181,10 +180,10 @@ onMounted(() => {
 // If steps load asynchronously later, focus last step only if none focused yet
 watch(steps, (newSteps) => {
   if (!newSteps || !newSteps.length) return;
-  if (focusedStepId.value == null) {
+  if (prefocusedStepId.value == null) {
     const last = newSteps[newSteps.length - 1];
     if (last) {
-      focusedStepId.value = last.id;
+      prefocusedStep.value = last;
       void nextTick(() => centerFocusedCard());
     }
   }
