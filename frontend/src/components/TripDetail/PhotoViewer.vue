@@ -15,9 +15,10 @@
       <q-spinner color="primary" size="2em" />
     </div>
     <div v-else>
-      <div v-if="photos.length" class="row q-col-gutter-md">
-        <div v-for="p in photos" :key="p.id" class="col-12 col-md-4">
-          <q-card flat bordered class="photo-card">
+      <div v-if="photos.length" class="gallery-row" style="display:flex; gap:16px;">
+        <div v-for="(col, i) in photoColumns" :key="i" class="gallery-col"
+          style="flex:1; display:flex; flex-direction:column; gap:16px;">
+          <q-card v-for="p in col" :key="p.id" flat bordered class="photo-card">
             <div style="position:relative;">
               <q-img :src="p.url" :alt="p.name || 'photo'" fit="cover" spinner-color="primary"
                 @error="onImgErr($event)" />
@@ -41,6 +42,22 @@
 </template>
 
 <script lang="ts" setup>
+import { useQuasar } from 'quasar';
+const $q = useQuasar();
+const photoColumns = computed(() => {
+  const arr = props.photos ?? [];
+  if ($q.screen.lt.md) {
+    // Mobile: single column
+    return [arr];
+  } else {
+    // Desktop: 3 columns
+    const cols: Photo[][] = [[], [], []];
+    arr.forEach((p, idx) => {
+      (cols[idx % 3]!).push(p);
+    });
+    return cols;
+  }
+});
 import { ref } from 'vue';
 const showModal = ref(false);
 const modalUrl = ref('');

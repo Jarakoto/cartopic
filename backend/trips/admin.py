@@ -7,7 +7,6 @@ from django.utils.html import format_html
 class StepInline(admin.TabularInline):
 	model = Step
 	extra = 1
-	readonly_fields = ("order",)
 	fields = ("name", "order", "description", "lat", "lng", "cover_photo")
 
 class PhotoInline(admin.TabularInline):
@@ -23,7 +22,7 @@ class TripAdmin(admin.ModelAdmin):
 class StepAdmin(admin.ModelAdmin):
 	list_display = ("id", "name", "trip", "order", "cover_photo", "photo_count")
 	ordering = ("trip", "order")
-	readonly_fields = ("order",)
+	list_editable = ("order",)
 	inlines = [PhotoInline]
 
 	def photo_count(self, obj):
