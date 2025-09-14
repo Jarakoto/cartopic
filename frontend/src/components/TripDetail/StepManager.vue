@@ -7,22 +7,20 @@
         <div class="step-cards-row flex row no-wrap q-gutter-md q-py-none"
           v-touch-swipe.mouse.horizontal.prevent="handleSwipe"
           style="overflow-x: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;">
-          <q-card v-for="(step) in steps" :key="step.id" class="step-card cursor-pointer"
-            :class="{ focused: step.id === prefocusedStepId }" :data-step-id="step.id" @click="selectStep(step)" flat
-            bordered>
+          <q-card v-for="(step) in steps" :key="step.id" class="step-card"
+            :class="{ focused: step.id === prefocusedStepId }" :data-step-id="step.id" flat bordered>
             <q-card-section>
               <div class="text-bold q-mb-xs">{{ step.name }}</div>
-              <div class="q-mb-xs text-caption text-grey-7 align-center flex">{{ new
-                Date(step.startedAt!).toLocaleDateString(undefined, {
-                  month:
-                    '2-digit', day: '2-digit'
-                }) }}
-                <template v-if="step.endedAt">
-                  &#8594;
-                  {{ new Date(step.endedAt).toLocaleDateString(undefined, {
-                    month: '2-digit', day: '2-digit'
-                  }) }}
-                </template>
+              <div class="q-mb-xs text-caption text-grey-7 flex items-center justify-between">
+                <span class="row items-center">
+                  {{ new Date(step.startedAt!).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) }}
+                  <template v-if="step.endedAt">
+                    &nbsp;→&nbsp;
+                    {{ new Date(step.endedAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) }}
+                  </template>
+                </span>
+                <q-btn size="sm" flat dense color="primary" label="voir" aria-label="Voir l'étape"
+                  @click.stop="selectStep(step)" />
               </div>
             </q-card-section>
           </q-card>
