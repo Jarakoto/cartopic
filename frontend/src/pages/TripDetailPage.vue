@@ -5,12 +5,14 @@
     <div id="map" class="fit"></div>
     <!-- Step name now shown inside marker, not as floating label -->
     <template v-if="mapLoaded && tripStore.selectedTrip">
-      <router-view :map="map" @add-step="handleAddStep" />
+      <router-view :map="map" @add-step="handleAddStep" @select-step="tripStore.setSelectedStep" />
     </template>
   </q-page>
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter();
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -27,11 +29,22 @@ let stepMarkers: maplibregl.Marker[] = [];
 
 const flyToStep = (step: Step | null) => {
   if (map && step) {
-    map.flyTo({ center: [step.lng, step.lat], zoom: 16, duration: 2000 });
+    map.flyTo({ center: [step.lng, step.lat], zoom: 12, duration: 2000 });
   }
 };
 
-watch(() => tripStore.selectedStep, flyToStep);
+watch(() => tripStore.selectedStep, (step) => {
+  if (step) {
+    void flyToStep(step);
+    if (mapLoaded.value) {
+      drawSteps();
+    }
+    void router.push({
+      name: route.name,
+      params: { ...route.params, stepId: step.id }
+    });
+  }
+});
 
 onMounted(() => {
   if (!route.params.id || typeof (route.params.id) !== 'string') {

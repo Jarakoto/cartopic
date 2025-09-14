@@ -1,11 +1,15 @@
 <template>
-  <div class="q-pa-sm q-pr-none step-manager absolute left-panel">
-    <q-timeline layout="dense" color="primary" horizontal>
-      <q-timeline-entry v-for="step in steps" :key="step.id" :title="step.name" @click="selectExistingStep(step.id)"
-        class="step-timeline-entry" v-show="!stepAddEnabled">
-        <div class="q-mb-xs">{{ step.startedAt }}</div>
-      </q-timeline-entry>
-      <q-timeline-entry v-if="stepAddEnabled" class="step-timeline-entry">
+  <div class="q-pa-sm q-pr-none step-manager absolute-bottom flex items-center justify-start">
+    <div class="step-cards-row flex row no-wrap q-gutter-md q-px-md"
+      style="height: 200px; overflow-x: auto; width: 100vw;">
+      <q-card v-for="(step) in steps" :key="step.id" class="step-card cursor-pointer"
+        @click="selectExistingStep(step.id)" flat bordered>
+        <q-card-section>
+          <div class="text-bold q-mb-xs">{{ step.name }}</div>
+          <div class="q-mb-xs">{{ step.startedAt }}</div>
+        </q-card-section>
+      </q-card>
+      <div v-if="stepAddEnabled" class="step-card full-width q-pa-md">
         <q-form @submit.prevent="submitStep">
           <q-input v-model="name" label="Nom" dense outlined required />
           <q-input type="textarea" v-model="description" label="Description" dense outlined required />
@@ -18,13 +22,13 @@
             <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
           </div>
         </q-form>
-      </q-timeline-entry>
-      <q-timeline-entry v-if="!stepAddEnabled">
+      </div>
+      <div v-if="!stepAddEnabled" class="step-card q-pa-md">
         <q-btn @click="toggleAddMode()">
           Ajouter une étape
         </q-btn>
-      </q-timeline-entry>
-    </q-timeline>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -132,31 +136,15 @@ function submitStep() {
 </script>
 
 <style lang="scss">
-.step-manager.left-panel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: 280px;
-  background: white;
-  overflow-y: auto;
-  z-index: 20;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
-}
-
+// Only keep minimal custom styles for card sizing
 .step-card {
   min-width: 200px;
   max-width: 200px;
   flex-shrink: 0;
-  margin-right: 8px;
 }
 
 .step-card.full-width {
   min-width: 100%;
   max-width: 100%;
-}
-
-.step-timeline-entry {
-  cursor: pointer;
 }
 </style>
