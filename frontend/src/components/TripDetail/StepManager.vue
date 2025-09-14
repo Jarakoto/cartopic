@@ -1,46 +1,30 @@
 <template>
-  <div class="q-pa-sm step-manager absolute">
-    <div class="row no-wrap q-gutter-sm">
-      <q-card
-        v-for="step in steps"
-        :key="step.id"
-        class="step-card q-pa-none"
-        v-show="!stepAddEnabled"
-        @click="selectExistingStep(step.id)"
-        style="cursor:pointer;"
-      >
-        <q-card-section class="column items-center">
-          <div class="q-mb-xs text-bold">{{ step.name }}</div>
-        </q-card-section>
-      </q-card>
-      <q-card :class="['step-card', { 'full-width': stepAddEnabled }]">
-        <q-card-section>
-          <q-btn v-show="!stepAddEnabled" @click="toggleAddMode()">
-            Ajouter une étape
-          </q-btn>
-          <div v-if="stepAddEnabled" class="step-adder-form">
-            <q-form @submit.prevent="submitStep">
-              <q-input v-model="name" label="Nom" dense outlined required />
-              <q-input type="textarea" v-model="description" label="Description" dense outlined required />
-              <q-input
-                :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
-                label="Position du curseur"
-                dense
-                outlined
-                :error="positionError"
-                :error-message="positionError ? 'Positionner le curseur avec la carte' : ''"
-                readonly
-                required
-              />
-              <div class="column q-gutter-sm items-stretch">
-                <q-btn type="submit" color="positive" label="Ajouter étape" />
-                <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
-              </div>
-            </q-form>
+  <div class="q-pa-sm step-manager absolute left-panel">
+    <q-timeline layout="dense" color="primary">
+      <q-timeline-entry v-for="step in steps" :key="step.id" :title="step.name" @click="selectExistingStep(step.id)"
+        class="step-timeline-entry" v-show="!stepAddEnabled">
+        <div class="q-mb-xs text-bold">{{ step.name }}</div>
+      </q-timeline-entry>
+      <q-timeline-entry v-if="stepAddEnabled" class="step-timeline-entry">
+        <q-form @submit.prevent="submitStep">
+          <q-input v-model="name" label="Nom" dense outlined required />
+          <q-input type="textarea" v-model="description" label="Description" dense outlined required />
+          <q-input
+            :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
+            label="Position du curseur" dense outlined :error="positionError"
+            :error-message="positionError ? 'Positionner le curseur avec la carte' : ''" readonly required />
+          <div class="column q-gutter-sm items-stretch">
+            <q-btn type="submit" color="positive" label="Ajouter étape" />
+            <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
           </div>
-        </q-card-section>
-      </q-card>
-    </div>
+        </q-form>
+      </q-timeline-entry>
+      <q-timeline-entry v-if="!stepAddEnabled">
+        <q-btn @click="toggleAddMode()">
+          Ajouter une étape
+        </q-btn>
+      </q-timeline-entry>
+    </q-timeline>
   </div>
 </template>
 
@@ -148,21 +132,31 @@ function submitStep() {
 </script>
 
 <style lang="scss">
-.step-manager {
-  bottom: 0;
+.step-manager.left-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 320px;
   background: white;
-  right: 0;
-  width: 100%;
-  overflow-x: scroll;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
 }
+
 .step-card {
   min-width: 200px;
   max-width: 200px;
   flex-shrink: 0;
   margin-right: 8px;
 }
+
 .step-card.full-width {
   min-width: 100%;
   max-width: 100%;
+}
+
+.step-timeline-entry {
+  cursor: pointer;
 }
 </style>
