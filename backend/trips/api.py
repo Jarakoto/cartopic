@@ -10,6 +10,13 @@ class CoverPhotoRef(Schema):
     id: int
     url: str
 
+class PhotoSchema(Schema):
+    id: int
+    name: str
+    description: str | None = None
+    date: str
+    url: str
+
 class StepSchema(Schema):
     id: int
     name: str
@@ -17,6 +24,7 @@ class StepSchema(Schema):
     lng: float
     description: str
     cover_photo: CoverPhotoRef | None = None
+    photos: list[PhotoSchema] = []
 
 class StepCreateSchema(Schema):
     name: str
@@ -30,13 +38,6 @@ class TripSchema(Schema):
     cover_photo: CoverPhotoRef | None = None
     steps: list[StepSchema] = []
 
-class PhotoSchema(Schema):
-    id: int
-    name: str
-    description: str | None = None
-    date: str
-    url: str
-
 class PhotoCreateSchema(Schema):
     name: str
     description: str | None = None
@@ -44,7 +45,11 @@ class PhotoCreateSchema(Schema):
 
 @api.get("/trips", response=list[TripSchema])
 def list_trips(request):
-    trips = Trip.objects.prefetch_related('steps__cover_photo', 'cover_photo').all()
+    trips = Trip.objects.prefetch_related(
+        'cover_photo',
+        'steps__cover_photo',
+        'steps__photos'
+    ).all()
     return [TripSchema(
         id=t.id, #type: ignore
         name=t.name,
@@ -58,7 +63,16 @@ def list_trips(request):
                 cover_photo=(
                     CoverPhotoRef(id=s.cover_photo.id, url=s.cover_photo.url) # type: ignore
                     if s.cover_photo else None
-                )
+                ),
+                photos=[
+                    PhotoSchema(
+                        id=p.id,
+                        name=p.name,
+                        description=p.description,
+                        date=p.date.isoformat(),
+                        url=p.url
+                    ) for p in s.photos.all() # type: ignore
+                ]
             ) for s in t.steps.all() #type: ignore
         ]
         , cover_photo=(
