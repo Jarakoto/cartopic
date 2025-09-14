@@ -1,14 +1,21 @@
 <template>
   <div class="q-pa-sm step-manager absolute">
     <div class="row no-wrap q-gutter-sm">
-      <q-card v-for="step in steps" :key="step.id" class="step-card q-pa-none" v-show="!stepAddEnabled" @click="openStep(step.id)" style="cursor:pointer;">
+      <q-card
+        v-for="step in steps"
+        :key="step.id"
+        class="step-card q-pa-none"
+        v-show="!stepAddEnabled"
+        @click="selectExistingStep(step.id)"
+        style="cursor:pointer;"
+      >
         <q-card-section class="column items-center">
           <div class="q-mb-xs text-bold">{{ step.name }}</div>
         </q-card-section>
       </q-card>
       <q-card :class="['step-card', { 'full-width': stepAddEnabled }]">
         <q-card-section>
-          <q-btn v-show="!stepAddEnabled" @click="setStepAddMode(!stepAddEnabled)">
+          <q-btn v-show="!stepAddEnabled" @click="toggleAddMode()">
             Ajouter une étape
           </q-btn>
           <div v-if="stepAddEnabled" class="step-adder-form">
@@ -38,170 +45,98 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick } from 'vue';
-
-import { ref, computed, onMounted } from 'vue';
+import { nextTick, ref, computed, onMounted } from 'vue';
 import { useTripStore } from 'stores/trip-store';
-import maplibregl from 'maplibre-gl';
 import { useRouter } from 'vue-router';
 
+import maplibregl from 'maplibre-gl';
+
+// Accept map from parent again, internalize cursor logic
 const props = defineProps<{ map: maplibregl.Map }>();
+const emits = defineEmits<{
+  (e: 'select-step', id: number): void;
+  (e: 'add-step', payload: { name: string; description: string; lng: number; lat: number }): void;
+  (e: 'cancel-add'): void;
+}>();
+
 const name = ref('');
 const description = ref('');
 const stepAddEnabled = ref(false);
 const trip = useTripStore();
 const router = useRouter();
-let cursorMarker: maplibregl.Marker | null = null;
-let stepMarkers: maplibregl.Marker[] = [];
-const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
 const positionError = ref(false);
-const el = document.createElement('div');
+// Cursor marker elements
+let cursorMarker: maplibregl.Marker | null = null;
+let cursorEl: HTMLDivElement | null = null;
+const cursorPosition = ref<{ lng: number; lat: number } | null>(null);
 
-const steps = computed(() => {
-  return trip.selectedTrip!.steps ? trip.selectedTrip!.steps : [];
-});
+const steps = computed(() => trip.selectedTrip?.steps || []);
 
-function openStep(stepId: number) {
+function selectExistingStep(stepId: number) {
+  emits('select-step', stepId);
   if (trip.selectedTrip) {
     void router.push(`/trips/${trip.selectedTrip.id}/steps/${stepId}`);
   }
 }
 
+function toggleAddMode() {
+  setStepAddMode(!stepAddEnabled.value);
+}
+
 onMounted(() => {
-  // Scroll to the end of the step-manager div after DOM is rendered
   void nextTick().then(() => {
     const container = document.querySelector('.step-manager');
-    if (container) {
-      container.scrollLeft = container.scrollWidth;
-    }
+    if (container) container.scrollLeft = container.scrollWidth;
   });
-  // Add a cursor icon marker at the center
-  el.style.background = 'none';
-  el.style.width = '32px';
-  el.style.height = '32px';
-  el.style.display = 'flex';
-  el.style.alignItems = 'center';
-  el.style.justifyContent = 'center';
-  el.innerHTML = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="16" y1="4" x2="16" y2="28" stroke="#1976D2" stroke-width="2"/><line x1="4" y1="16" x2="28" y2="16" stroke="#1976D2" stroke-width="2"/></svg>`;
-  el.style.visibility = 'hidden'
-  const center = props.map.getCenter();
-  cursorMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
-    .setLngLat([center.lng, center.lat])
-    .addTo(props.map);
+  initCursorMarker();
   props.map.on('move', () => {
+    if (!cursorMarker) return;
     const center = props.map.getCenter();
-    if (cursorMarker) {
-      cursorMarker.setLngLat([center.lng, center.lat]);
-      cursorPosition.value = { lng: center.lng, lat: center.lat };
-    }
+    cursorMarker.setLngLat([center.lng, center.lat]);
+    cursorPosition.value = { lng: center.lng, lat: center.lat };
   });
-
-  // Add steps and arc layers
-  addStepsLayers();
-  addStepMarkers();
 });
-
-function addStepMarkers() {
-  // Remove old markers
-  stepMarkers.forEach(marker => marker.remove());
-  stepMarkers = [];
-  const map = props.map;
-  const stepArr = steps.value;
-  stepArr.forEach(step => {
-    const markerEl = document.createElement('div');
-    markerEl.style.width = '24px';
-    markerEl.style.height = '24px';
-    markerEl.style.borderRadius = '50%';
-    markerEl.style.background = '#FF9800';
-    markerEl.style.border = '2px solid #fff';
-    markerEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
-    markerEl.style.display = 'flex';
-    markerEl.style.alignItems = 'center';
-    markerEl.style.justifyContent = 'center';
-    markerEl.innerHTML = `<span style='color:#222;font-size:14px;font-weight:bold;'>${step.name[0] || ''}</span>`;
-    const marker = new maplibregl.Marker({ element: markerEl, anchor: 'center' })
-      .setLngLat([step.lng, step.lat])
-      .addTo(map);
-    stepMarkers.push(marker);
-  });
-}
-
-function addStepsLayers() {
-  const map = props.map;
-  // Remove old sources/layers if they exist
-  if (map.getLayer('steps-points')) map.removeLayer('steps-points');
-  if (map.getSource('steps')) map.removeSource('steps');
-  if (map.getLayer('steps-arc')) map.removeLayer('steps-arc');
-  if (map.getSource('steps-line')) map.removeSource('steps-line');
-
-  const stepArr = steps.value;
-  if (!stepArr.length) return;
-  // Points source
-  const features: GeoJSON.Feature<GeoJSON.Point>[] = stepArr.map(step => ({
-    type: "Feature",
-    geometry: {
-      type: "Point",
-      coordinates: [step.lng, step.lat]
-    },
-    properties: {
-      id: step.id,
-      name: step.name
-    }
-  }));
-  const geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
-    type: "FeatureCollection",
-    features
-  };
-  map.addSource('steps', {
-    type: 'geojson',
-    data: geojson
-  });
-
-  // Arc layer
-  if (features.length > 1) {
-    const lineFeature: GeoJSON.Feature<GeoJSON.LineString> = {
-      type: "Feature",
-      geometry: {
-        type: "LineString",
-        coordinates: features.map(f => f.geometry.coordinates)
-      },
-      properties: {}
-    };
-    map.addSource('steps-line', {
-      type: 'geojson',
-      data: lineFeature
-    });
-    map.addLayer({
-      id: 'steps-arc',
-      type: 'line',
-      source: 'steps-line',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#1976D2',
-        'line-width': 4,
-        'line-opacity': 0.6
-      }
-    });
-  }
-}
 
 function resetNewStepForm() {
   name.value = '';
-  cursorPosition.value = null;
-  setStepAddMode(false)
+  description.value = '';
+  setStepAddMode(false);
+  emits('cancel-add');
 }
 
 function setStepAddMode(newValue: boolean) {
   stepAddEnabled.value = newValue;
-  el.style.visibility = newValue ? 'visible' : 'hidden';
+  toggleCursorVisibility(newValue);
+  if (newValue && !cursorPosition.value) positionError.value = true; else positionError.value = false;
 }
 
-async function submitStep() {
-  if (!name.value || !description.value || !cursorPosition.value) return;
-  await trip.addStep({
+function initCursorMarker() {
+  cursorEl = document.createElement('div');
+  cursorEl.style.background = 'none';
+  cursorEl.style.width = '32px';
+  cursorEl.style.height = '32px';
+  cursorEl.style.display = 'flex';
+  cursorEl.style.alignItems = 'center';
+  cursorEl.style.justifyContent = 'center';
+  cursorEl.innerHTML = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="16" y1="4" x2="16" y2="28" stroke="#1976D2" stroke-width="2"/><line x1="4" y1="16" x2="28" y2="16" stroke="#1976D2" stroke-width="2"/></svg>`;
+  cursorEl.style.visibility = 'hidden';
+  const center = props.map.getCenter();
+  cursorMarker = new maplibregl.Marker({ element: cursorEl, anchor: 'center' })
+    .setLngLat([center.lng, center.lat])
+    .addTo(props.map);
+  cursorPosition.value = { lng: center.lng, lat: center.lat };
+}
+
+function toggleCursorVisibility(visible: boolean) {
+  if (cursorEl) cursorEl.style.visibility = visible ? 'visible' : 'hidden';
+}
+
+function submitStep() {
+  if (!name.value || !description.value || !cursorPosition.value) {
+    positionError.value = !cursorPosition.value;
+    return;
+  }
+  emits('add-step', {
     name: name.value,
     description: description.value,
     lng: cursorPosition.value.lng,
