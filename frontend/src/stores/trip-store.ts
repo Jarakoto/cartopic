@@ -4,6 +4,8 @@ import { api } from 'boot/axios';
 import camelcaseKeys from 'camelcase-keys';
 import { type AxiosInstance } from 'axios';
 
+export interface CoverPhotoRef { id: number; url: string }
+
 export interface Step {
   id: number;
   name: string;
@@ -12,6 +14,7 @@ export interface Step {
   lng: number;
   startedAt: Date | null;
   endedAt: Date | null;
+  coverPhoto?: CoverPhotoRef | null; // optional cover reference from backend
 }
 
 export interface Trip {
@@ -21,6 +24,7 @@ export interface Trip {
   steps: Step[];
   startedAt: Date | null;
   endedAt: Date | null;
+  coverPhoto?: CoverPhotoRef | null; // optional cover reference from backend
 }
 
 export const useTripStore = defineStore('trip', () => {
@@ -57,5 +61,14 @@ export const useTripStore = defineStore('trip', () => {
     return newStep;
   }
 
-  return { trips, fetchTrips, selectedTrip, selectedStep, setSelectedTrip, addStep, setSelectedStep };
+  // Helper to get a trip's cover URL with fallback logic (currently returns coverPhoto.url or null)
+  function getTripCoverUrl(trip: Trip): string | null {
+    return trip.coverPhoto?.url || null;
+  }
+
+  function getStepCoverUrl(step: Step): string | null {
+    return step.coverPhoto?.url || null;
+  }
+
+  return { trips, fetchTrips, selectedTrip, selectedStep, setSelectedTrip, addStep, setSelectedStep, getTripCoverUrl, getStepCoverUrl };
 });

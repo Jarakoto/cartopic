@@ -1,6 +1,6 @@
 <template>
   <q-card
-    class="slide-drawer q-pa-md slide-drawer--bottom text-white fixed-bottom column no-wrap"
+    class="slide-drawer q-pa-md slide-drawer--bottom fixed-bottom column no-wrap"
     :class="`slide-drawer--open-${drawerMode}`"
     :style="drawerStyle"
   >
@@ -89,14 +89,13 @@ onBeforeUnmount(() => {
   border-radius: 12px 12px 0 0
   overscroll-behavior: contain
   touch-action: none
+  color: black
   &--bottom
     border-bottom-left-radius: 0
     border-bottom-right-radius: 0
-    background-color: #333
-    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%)
+    background-color: white
     bottom: unset
     top: 100%
-    transition: background-color 0.3s ease-in-out
 
     > div:last-child,
     > img:last-child
@@ -106,7 +105,7 @@ onBeforeUnmount(() => {
     // Removed half state background
     
     &.slide-drawer--open-full
-      background-color: #01884a
+      background-color: white
   &__handler
     &--horizontal
       cursor: grab
