@@ -1,53 +1,76 @@
 <template>
-  <div class="q-pa-sm q-pr-none step-manager absolute-bottom flex items-center justify-start full-width">
-    <div class="cards-nav-wrapper row items-center no-wrap full-width relative q-gutter-sm">
-      <q-btn class="desktop-nav-btn nav-left" size="md" flat icon="chevron_left" v-show="canShowNav"
-        :disable="!canGoPrev" @click="focusByDelta(-1)" />
-      <div class="cards-row-wrapper col-grow">
-        <div class="step-cards-row flex row no-wrap q-gutter-md q-py-none"
-          v-touch-swipe.mouse.horizontal.prevent="handleSwipe"
-          style="overflow-x: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;">
-          <q-card v-for="(step) in steps" :key="step.id" class="step-card"
-            :class="{ focused: step.id === prefocusedStepId }" :data-step-id="step.id" flat bordered>
-            <q-card-section>
-              <div class="text-bold q-mb-xs">{{ step.name }}</div>
-              <div class="q-mb-xs text-caption text-grey-7 flex items-center justify-between">
-                <span class="row items-center">
-                  {{ new Date(step.startedAt!).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) }}
-                  <template v-if="step.endedAt">
-                    &nbsp;→&nbsp;
-                    {{ new Date(step.endedAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) }}
-                  </template>
-                </span>
-                <q-btn size="sm" flat dense color="primary" label="voir" aria-label="Voir l'étape"
-                  @click.stop="selectStep(step)" />
-              </div>
-            </q-card-section>
-          </q-card>
-          <div v-if="stepAddEnabled" class="step-card full-width q-pa-md">
-            <q-form @submit.prevent="submitStep">
-              <q-input v-model="name" label="Nom" dense outlined required />
-              <q-input type="textarea" v-model="description" label="Description" dense outlined required />
+  <div class="step-manager absolute-bottom full-width">
+    <transition name="fade" mode="out-in">
+      <!-- Full width Add Step Panel -->
+      <div v-if="stepAddEnabled" key="add" class="add-step-panel q-pa-md q-pb-lg">
+        <div class="row items-center justify-between q-mb-md">
+          <div class="text-subtitle1">Nouvelle étape</div>
+          <q-btn flat dense round icon="close" aria-label="Fermer" @click="resetNewStepForm" />
+        </div>
+        <q-form @submit.prevent="submitStep" class="q-gutter-lg">
+          <div class="row q-col-gutter-lg">
+            <div class="col-12">
+              <q-input v-model="name" label="Nom" outlined required dense />
+            </div>
+            <div class="col-12">
+              <q-input v-model="description" type="textarea" label="Description" outlined autogrow required dense />
+            </div>
+          </div>
+          <div class="row q-col-gutter-lg items-start">
+            <div class="col-12">
               <q-input
                 :model-value="cursorPosition ? `${cursorPosition.lng.toFixed(3)}, ${cursorPosition.lat.toFixed(3)}` : ''"
-                label="Position du curseur" dense outlined :error="positionError"
-                :error-message="positionError ? 'Positionner le curseur avec la carte' : ''" readonly required />
-              <div class="column q-gutter-sm items-stretch">
-                <q-btn type="submit" color="positive" label="Ajouter étape" />
-                <q-btn @click="resetNewStepForm" color="negative" label="Annuler" />
+                label="Position du curseur" outlined :error="positionError"
+                :error-message="positionError ? 'Positionner le curseur avec la carte' : ''" readonly required dense />
+            </div>
+            <div class="col-12 col-md-8 row q-col-gutter-sm">
+              <div class="col-12 col-sm-6">
+                <q-btn type="submit" color="positive" label="Ajouter" class="full-width" />
               </div>
-            </q-form>
+              <div class="col-12 col-sm-6">
+                <q-btn outline color="negative" label="Annuler" class="full-width" @click="resetNewStepForm" />
+              </div>
+            </div>
           </div>
-          <div v-if="!stepAddEnabled" class="step-card q-pa-md">
-            <q-btn @click="toggleAddMode()">
-              Ajouter une étape
-            </q-btn>
+        </q-form>
+      </div>
+      <!-- Carousel when not adding -->
+      <div v-else key="carousel" class="q-pa-sm q-pr-none flex items-center justify-start full-width">
+        <div class="cards-nav-wrapper row items-center no-wrap full-width relative q-gutter-sm">
+          <q-btn class="desktop-nav-btn nav-left" size="md" flat icon="chevron_left" v-show="canShowNav"
+            :disable="!canGoPrev" @click="focusByDelta(-1)" />
+          <div class="cards-row-wrapper col-grow">
+            <div class="step-cards-row flex row no-wrap q-gutter-md q-py-none"
+              v-touch-swipe.mouse.horizontal.prevent="handleSwipe"
+              style="overflow-x: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;">
+              <q-card v-for="(step) in steps" :key="step.id" class="step-card"
+                :class="{ focused: step.id === prefocusedStepId }" :data-step-id="step.id" flat bordered>
+                <q-card-section>
+                  <div class="text-bold q-mb-xs">{{ step.name }}</div>
+                  <div class="q-mb-xs text-caption text-grey-7 flex items-center justify-between">
+                    <span class="row items-center">
+                      {{ new Date(step.startedAt!).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })
+                      }}
+                      <template v-if="step.endedAt">
+                        &nbsp;→&nbsp;
+                        {{ new Date(step.endedAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) }}
+                      </template>
+                    </span>
+                    <q-btn size="sm" flat dense color="primary" label="voir" aria-label="Voir l'étape"
+                      @click.stop="selectStep(step)" />
+                  </div>
+                </q-card-section>
+              </q-card>
+              <div class="step-card q-pa-md flex flex-center">
+                <q-btn color="primary" outline icon="add" @click="toggleAddMode" />
+              </div>
+            </div>
           </div>
+          <q-btn class="desktop-nav-btn nav-right" size="md" unelevated icon="chevron_right" v-show="canShowNav"
+            :disable="!canGoNext" @click="focusByDelta(1)" />
         </div>
       </div>
-      <q-btn class="desktop-nav-btn nav-right" size="md" unelevated icon="chevron_right" v-show="canShowNav"
-        :disable="!canGoNext" @click="focusByDelta(1)" />
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -271,6 +294,23 @@ function submitStep() {
   }
 
 
+}
+
+.add-step-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .18s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* Hide horizontal scrollbar while keeping scroll functionality */
