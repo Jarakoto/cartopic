@@ -6,6 +6,14 @@ import { type AxiosInstance } from 'axios';
 
 export interface CoverPhotoRef { id: number; url: string }
 
+export interface Photo {
+  id: number;
+  name: string;
+  description?: string | null;
+  date: string;
+  url: string;
+}
+
 export interface Step {
   id: number;
   name: string;
@@ -15,6 +23,7 @@ export interface Step {
   startedAt: Date | null;
   endedAt: Date | null;
   coverPhoto?: CoverPhotoRef | null; // optional cover reference from backend
+  photos?: Photo[]; // lazy-loaded photos for carousel
 }
 
 export interface Trip {
