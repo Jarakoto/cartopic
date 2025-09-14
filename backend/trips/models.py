@@ -21,3 +21,13 @@ class Step(models.Model):
 
 	def __str__(self):
 		return f"{self.name} ({self.trip.name})"
+
+class Photo(models.Model):
+	step = models.ForeignKey(Step, related_name='photos', on_delete=models.CASCADE)
+	name = models.CharField(max_length=255)
+	description = models.TextField(blank=True, null=True)
+	date = models.DateTimeField(auto_now_add=True)
+	url = models.URLField(max_length=500)
+
+	def __str__(self):
+		return f"Photo {self.name} for Step {self.step.name}"
