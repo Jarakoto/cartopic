@@ -7,7 +7,7 @@
       <div class="tabs-area">
         <q-tabs v-model="tab" dense class="text-grey" active-color="primary" align="left" inline-label narrow-indicator
           indicator-color="primary">
-          <q-tab name="description" icon="description" title="Description" label="Journal" />
+          <q-tab class="q-pl-none" name="description" icon="description" title="Description" label="Journal" />
           <q-tab name="photos" icon="photo" title="Photos" label="Photos" />
         </q-tabs>
         <q-separator />

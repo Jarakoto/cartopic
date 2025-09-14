@@ -1,29 +1,22 @@
 <template>
   <q-page class="q-pa-none">
-      <q-btn
-        icon="arrow_back"
-        class="absolute"
-        style="top: 16px; left: 16px; z-index: 10;"
-        @click="$router.back()"
-        round
-        color="primary"
-        size="md"
-      />
-      <div id="map" class="fit"></div>
-      <template v-if="mapLoaded && tripStore.selectedTrip">
-        <router-view :map="map" @add-step="handleAddStep" />
-      </template>
+    <q-btn icon="arrow_back" class="absolute" style="top: 16px; left: 16px; z-index: 10;" @click="$router.back()" round
+      color="primary" size="md" />
+    <div id="map" class="fit"></div>
+    <!-- Step name now shown inside marker, not as floating label -->
+    <template v-if="mapLoaded && tripStore.selectedTrip">
+      <router-view :map="map" @add-step="handleAddStep" />
+    </template>
   </q-page>
 </template>
 
 <script setup lang="ts">
-
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useTripStore } from 'stores/trip-store';
+import { type Step, useTripStore } from 'stores/trip-store';
 
 const route = useRoute();
 const tripStore = useTripStore();
@@ -32,8 +25,16 @@ let map: maplibregl.Map;
 // Step markers
 let stepMarkers: maplibregl.Marker[] = [];
 
+const flyToStep = (step: Step | null) => {
+  if (map && step) {
+    map.flyTo({ center: [step.lng, step.lat], zoom: 16, duration: 2000 });
+  }
+};
+
+watch(() => tripStore.selectedStep, flyToStep);
+
 onMounted(() => {
-  if (!route.params.id || typeof(route.params.id) !== 'string') {
+  if (!route.params.id || typeof (route.params.id) !== 'string') {
     throw new Error('Trip id is required.');
   }
 
@@ -57,6 +58,9 @@ onMounted(() => {
   map.on('load', () => {
     mapLoaded.value = true;
     drawSteps();
+    if (tripStore.selectedStep) {
+      void flyToStep(tripStore.selectedStep);
+    }
   });
 
   // Watch steps changes to redraw markers/layers
@@ -65,23 +69,23 @@ onMounted(() => {
   });
 
 });
-  const handleStep = () => {
-    const stepId = route.params.stepId ? Number(route.params.stepId) : null;
-    if (route.params.stepId && stepId === null) {
+const handleStep = () => {
+  const stepId = route.params.stepId ? Number(route.params.stepId) : null;
+  if (route.params.stepId && stepId === null) {
+    throw new Error(`Step with id ${stepId} not found.`);
+  }
+  if (stepId !== null) {
+    const step = tripStore.selectedTrip?.steps?.find(s => s.id === stepId);
+    if (!step) {
       throw new Error(`Step with id ${stepId} not found.`);
     }
-    if (stepId !== null) {
-      const step = tripStore.selectedTrip?.steps?.find(s => s.id === stepId);
-      if (!step) {
-        throw new Error(`Step with id ${stepId} not found.`);
-      }
-      tripStore.setSelectedStep(step);
-    } else {
-      tripStore.setSelectedStep(null);
-    }
-  };
+    tripStore.setSelectedStep(step);
+  } else {
+    tripStore.setSelectedStep(null);
+  }
+};
 
-  watch(() => route.params.stepId, handleStep);
+watch(() => route.params.stepId, handleStep);
 
 function clearStepMarkers() {
   stepMarkers.forEach(m => m.remove());
@@ -99,16 +103,43 @@ function drawSteps() {
   if (!steps.length) return;
   steps.forEach(step => {
     const markerEl = document.createElement('div');
-    markerEl.style.width = '24px';
-    markerEl.style.height = '24px';
+    markerEl.style.width = '35px';
+    markerEl.style.height = '35px';
     markerEl.style.borderRadius = '50%';
-    markerEl.style.background = '#FF9800';
+    markerEl.style.background = '#cecece';
     markerEl.style.border = '2px solid #fff';
     markerEl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
     markerEl.style.display = 'flex';
     markerEl.style.alignItems = 'center';
     markerEl.style.justifyContent = 'center';
-    markerEl.innerHTML = `<span style='color:#222;font-size:14px;font-weight:bold;'>${step.name[0] || ''}</span>`;
+    markerEl.style.overflow = 'hidden';
+    markerEl.style.cursor = 'pointer';
+
+    // Highlight if selected
+    if (tripStore.selectedStep && step.id === tripStore.selectedStep.id) {
+      markerEl.style.border = '3px solid #1976D2';
+      markerEl.style.width = '50px';
+      markerEl.style.height = '50px';
+      markerEl.style.zIndex = '10';
+    }
+
+    let photoUrl = '';
+    if (step.coverPhoto) {
+      photoUrl = step.coverPhoto.url;
+    } else if (step.photos && step.photos.length > 0) {
+      photoUrl = (step.photos[0])!.url;
+    }
+
+    if (photoUrl) {
+      markerEl.innerHTML = `<img src='${photoUrl}' style='width:100%;height:100%;object-fit:cover;border-radius:50%;' alt='photo' />`;
+    } else {
+      markerEl.innerHTML = `<span style='color:#222;font-size:14px;font-weight:bold;'>${step.name[0] || ''}</span>`;
+    }
+    markerEl.title = step.name;
+
+    markerEl.addEventListener('click', () => {
+      tripStore.setSelectedStep(step);
+    });
     const marker = new maplibregl.Marker({ element: markerEl, anchor: 'center' })
       .setLngLat([step.lng, step.lat])
       .addTo(map);
@@ -146,13 +177,14 @@ async function handleAddStep(payload: { name: string; description: string; lng: 
 </script>
 
 <style lang="scss">
-  #map {
-    width: 100vw;
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    .maplibregl-ctrl-attrib {
-      display: none;
-    }
+#map {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+
+  .maplibregl-ctrl-attrib {
+    display: none;
   }
+}
 </style>

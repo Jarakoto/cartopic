@@ -1,13 +1,11 @@
 <template>
-  <q-card
-    class="slide-drawer q-pa-md slide-drawer--bottom fixed-bottom column no-wrap"
-    :class="`slide-drawer--open-${drawerMode}`"
-    :style="drawerStyle"
-  >
-    <q-card-section class="slide-drawer__handler--horizontal row flex-center q-pa-sm q-gutter-x-md" v-touch-pan.mouse.vertical="slideDrawer">
+  <q-card class="slide-drawer q-pa-md slide-drawer--bottom fixed-bottom column no-wrap"
+    :class="`slide-drawer--open-${drawerMode}`" :style="drawerStyle">
+    <q-card-section class="slide-drawer__handler--horizontal row flex-center q-pa-sm q-gutter-x-md"
+      v-touch-pan.mouse.vertical="slideDrawer">
       <div class="cursor-pointer" @click="cycleDrawer"></div>
     </q-card-section>
-      <slot></slot>
+    <slot></slot>
   </q-card>
 </template>
 
@@ -86,6 +84,7 @@ onBeforeUnmount(() => {
 <style lang="sass">
 // Only disable overscroll and touch-action when finger is on the panel
 .slide-drawer
+  z-index: 20
   border-radius: 12px 12px 0 0
   overscroll-behavior: contain
   touch-action: none
@@ -101,9 +100,9 @@ onBeforeUnmount(() => {
     > img:last-child
       border-bottom-left-radius: 0
       border-bottom-right-radius: 0
-    
+
     // Removed half state background
-    
+
     &.slide-drawer--open-full
       background-color: white
   &__handler

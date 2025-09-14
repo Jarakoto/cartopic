@@ -4,7 +4,10 @@ import { api } from 'boot/axios';
 import camelcaseKeys from 'camelcase-keys';
 import { type AxiosInstance } from 'axios';
 
-export interface CoverPhotoRef { id: number; url: string }
+export interface CoverPhotoRef {
+  id: number;
+  url: string;
+}
 
 export interface Photo {
   id: number;
@@ -47,9 +50,12 @@ export const useTripStore = defineStore('trip', () => {
   }
 
   function setSelectedStep(step: Step | null) {
-    if (step === null) { selectedStep.value = null; return; }
+    if (step === null) {
+      selectedStep.value = null;
+      return;
+    }
     if (selectedTrip.value) {
-      const foundStep = selectedTrip.value.steps.find(s => s.id === step.id);
+      const foundStep = selectedTrip.value.steps.find((s) => s.id === step.id);
       if (foundStep) {
         selectedStep.value = foundStep;
       }
@@ -79,5 +85,15 @@ export const useTripStore = defineStore('trip', () => {
     return step.coverPhoto?.url || null;
   }
 
-  return { trips, fetchTrips, selectedTrip, selectedStep, setSelectedTrip, addStep, setSelectedStep, getTripCoverUrl, getStepCoverUrl };
+  return {
+    trips,
+    fetchTrips,
+    selectedTrip,
+    selectedStep,
+    setSelectedTrip,
+    addStep,
+    setSelectedStep,
+    getTripCoverUrl,
+    getStepCoverUrl,
+  };
 });
